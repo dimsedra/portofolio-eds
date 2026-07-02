@@ -225,7 +225,7 @@ export default function Home() {
                   I believe the future of productivity belongs to hyper-customized agents that live entirely on the client, avoiding unnecessary network hops or vendor lock-in. 
                 </p>
                 <p className="text-zinc-400 text-xs leading-relaxed font-sans">
-                  Whether solo-developing narrative tools like <strong className="text-zinc-200 font-medium">ExifSense</strong>, setting up relation-first architectures like <strong className="text-zinc-200 font-medium">Dialogue</strong>, or coordinating massive security audits for Agile software competitions, my goal is the same: pristine, secure, and delightful code.
+                  Whether solo-developing narrative tools like <strong className="text-zinc-200 font-medium">ExifSense</strong>, training deep learning classifiers like <strong className="text-zinc-200 font-medium">Gemstone</strong>, setting up relation-first architectures like <strong className="text-zinc-200 font-medium">Dialogue</strong>, or coordinating massive security audits for Agile software competitions, my goal is the same: pristine, secure, and delightful code.
                 </p>
               </div>
 

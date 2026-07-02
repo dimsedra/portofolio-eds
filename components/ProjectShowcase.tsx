@@ -87,11 +87,51 @@ const SIMULATED_PROMPTS = [
   }
 ];
 
+// GEMSTONE CLASSIFIER SAMPLES
+const GEMSTONE_SAMPLES = [
+  {
+    name: "Ametrine",
+    color: { start: "#a855f7", end: "#f59e0b" },
+    shape: "M 50 15 L 85 35 L 85 65 L 50 85 L 15 65 L 15 35 Z",
+    confidence: 0.984,
+    alternatives: [
+      { name: "Amethyst", conf: 0.012 },
+      { name: "Citrine", conf: 0.004 }
+    ],
+    info: "Combination of Amethyst and Citrine with distinct purple and yellow zones. High classification confidence due to unique visual color banding."
+  },
+  {
+    name: "Blue Lace Agate",
+    color: { start: "#93c5fd", end: "#60a5fa" },
+    shape: "M 50 15 C 80 15 90 45 75 75 C 60 90 40 90 25 75 C 10 45 20 15 50 15 Z",
+    confidence: 0.952,
+    alternatives: [
+      { name: "Chalcedony", conf: 0.038 },
+      { name: "Aquamarine", conf: 0.010 }
+    ],
+    info: "Characterized by delicate, light blue and white banding. ResNet50 correctly recognizes the repeating linear pattern texture."
+  },
+  {
+    name: "Ruby",
+    color: { start: "#ef4444", end: "#9f1239" },
+    shape: "M 50 15 L 80 40 L 70 85 L 30 85 L 20 40 Z",
+    confidence: 0.916,
+    alternatives: [
+      { name: "Garnet Red", conf: 0.054 },
+      { name: "Spinel", conf: 0.022 }
+    ],
+    info: "Deep red corundum. Classifier distinguishes this from Garnet based on saturation and specific surface luster cues."
+  }
+];
+
 export default function ProjectShowcase() {
-  const [activeTab, setActiveTab] = useState<'dialogue' | 'exifsense' | 'security'>('dialogue');
+  const [activeTab, setActiveTab] = useState<'dialogue' | 'exifsense' | 'gemstone' | 'security'>('dialogue');
 
   // ExifSense State
   const [selectedExifIdx, setSelectedExifIdx] = useState(0);
+
+  // Gemstone State
+  const [selectedGemIdx, setSelectedGemIdx] = useState(0);
 
   // Dialogue Simulator State
   const [selectedPromptIdx, setSelectedPromptIdx] = useState<number | null>(null);
@@ -123,6 +163,7 @@ export default function ProjectShowcase() {
         {[
           { id: 'dialogue', label: 'Dialogue', subtitle: 'AI Companion' },
           { id: 'exifsense', label: 'ExifSense', subtitle: 'Metadata NLP' },
+          { id: 'gemstone', label: 'Gemstone', subtitle: 'Transfer Learning' },
           { id: 'security', label: 'Security QA', subtitle: 'Audit Lead' }
         ].map((tab) => (
           <button
@@ -164,13 +205,14 @@ export default function ProjectShowcase() {
               <div className="flex items-center space-x-2.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-zinc-100 animate-pulse"></span>
                 <span className="text-[11px] font-mono tracking-widest text-zinc-400 uppercase">
-                  {activeTab === 'dialogue' ? 'LOCAL-FIRST COMPANION' : activeTab === 'exifsense' ? 'METADATA NLP' : 'SECURE SDLC'}
+                  {activeTab === 'dialogue' ? 'LOCAL-FIRST COMPANION' : activeTab === 'exifsense' ? 'METADATA NLP' : activeTab === 'gemstone' ? 'TRANSFER LEARNING' : 'SECURE SDLC'}
                 </span>
               </div>
 
               <h3 className="text-3xl font-display font-medium tracking-tight text-zinc-50">
                 {activeTab === 'dialogue' && 'Dialogue: Fully Local Intelligence'}
                 {activeTab === 'exifsense' && 'ExifSense: Narrative Exif Extractor'}
+                {activeTab === 'gemstone' && 'Gemstone: ResNet50 Classifier'}
                 {activeTab === 'security' && 'Architecting Zero-Trust Platforms'}
               </h3>
 
@@ -180,6 +222,9 @@ export default function ProjectShowcase() {
                 }
                 {activeTab === 'exifsense' && 
                   "ExifSense is my solo-developed local utility. I built it to solve a major pain point: camera metadata tags (EXIF) are highly technical and confusing to the general public. ExifSense parses standard image files and employs rule-based narrative intelligence to translate raw settings (like ISO, aperture, focal length) into beautiful, educational, natural-language photographic stories."
+                }
+                {activeTab === 'gemstone' && 
+                  "I developed a local computer vision classification system capable of identifying 87 distinct gemstone classes. Using transfer learning with a pre-trained ResNet50 backbone and a custom classification head, I trained the model on 5,900+ augmented images. The system features a FastAPI backend, thread-safe lazy-loading, and a real-time web dashboard."
                 }
                 {activeTab === 'security' && 
                   "In our main University project, I acted as Project Manager & Security QA. I led a 30-member cross-functional team in establishing a secure web application. I structured an end-to-end Secure SDLC (Software Development Life Cycle), integrating threat modeling and parallel testing early in our cycles to prevent vulnerabilities rather than patching them later."
@@ -194,6 +239,9 @@ export default function ProjectShowcase() {
                     <span key={t} className="text-[11px] font-mono bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-zinc-300">{t}</span>
                   ))}
                   {activeTab === 'exifsense' && ['Vanilla JS', 'HTML5/CSS3', 'i18n Engine', 'EXIF Parser'].map(t => (
+                    <span key={t} className="text-[11px] font-mono bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-zinc-300">{t}</span>
+                  ))}
+                  {activeTab === 'gemstone' && ['PyTorch', 'ResNet50', 'FastAPI', 'Roboflow', 'Pillow'].map(t => (
                     <span key={t} className="text-[11px] font-mono bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-zinc-300">{t}</span>
                   ))}
                   {activeTab === 'security' && ['OWASP ZAP', 'Agile/Sprints', 'Parallel Testing', 'Secure SDLC', 'DOM Threat Auditing'].map(t => (
@@ -269,6 +317,18 @@ export default function ProjectShowcase() {
                     <div>
                       <span className="block text-2xl font-mono text-zinc-100 font-medium">3 languages</span>
                       <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider">i18n (EN, ID, AR)</span>
+                    </div>
+                  </>
+                )}
+                {activeTab === 'gemstone' && (
+                  <>
+                    <div>
+                      <span className="block text-2xl font-mono text-zinc-100 font-medium">65.6%</span>
+                      <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Test Accuracy</span>
+                    </div>
+                    <div>
+                      <span className="block text-2xl font-mono text-zinc-100 font-medium">87 Classes</span>
+                      <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Categorized</span>
                     </div>
                   </>
                 )}
@@ -462,7 +522,98 @@ export default function ProjectShowcase() {
               </div>
             )}
 
-            {/* WIDGET 3: UNIVERSITY SECURITY AUDIT & PM */}
+            {/* WIDGET 3: GEMSTONE CLASSIFIER MOCKUP */}
+            {activeTab === 'gemstone' && (
+              <div className="flex flex-col h-full justify-between space-y-4">
+                <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+                  <div className="flex items-center space-x-2 text-zinc-400">
+                    <Layers className="w-4 h-4 text-zinc-400" />
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-400">ResNet50 Classifier Dashboard</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-500">FastAPI Backend Mockup</span>
+                </div>
+
+                {/* Sample selector */}
+                <div className="space-y-2">
+                  <span className="block text-[10px] font-mono text-zinc-500">Select a gemstone sample to classify:</span>
+                  <div className="flex space-x-2">
+                    {GEMSTONE_SAMPLES.map((s, idx) => (
+                      <button
+                        key={s.name}
+                        onClick={() => setSelectedGemIdx(idx)}
+                        className={`text-[11px] font-mono px-3 py-1.5 rounded-md border transition-all cursor-pointer ${
+                          selectedGemIdx === idx
+                            ? 'bg-zinc-100 border-zinc-200 text-zinc-950 font-medium'
+                            : 'bg-zinc-900/40 border-zinc-900 text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Main display */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  {/* Left: Gemstone Visualizer (5 columns) */}
+                  <div className="md:col-span-5 flex flex-col items-center justify-center bg-zinc-950 border border-zinc-900 rounded-lg p-4 h-[160px] relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-radial from-zinc-900/50 to-transparent pointer-events-none" />
+                    <svg className="w-20 h-20 drop-shadow-[0_0_15px_rgba(255,255,255,0.07)]" viewBox="0 0 100 100">
+                      <defs>
+                        <linearGradient id={`gemGrad-${selectedGemIdx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor={GEMSTONE_SAMPLES[selectedGemIdx].color.start} />
+                          <stop offset="100%" stopColor={GEMSTONE_SAMPLES[selectedGemIdx].color.end} />
+                        </linearGradient>
+                      </defs>
+                      <path 
+                        d={GEMSTONE_SAMPLES[selectedGemIdx].shape} 
+                        style={{
+                          fill: `url(#gemGrad-${selectedGemIdx})`,
+                          filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))'
+                        }}
+                      />
+                    </svg>
+                    <span className="text-[10px] font-mono text-zinc-500 mt-2">{GEMSTONE_SAMPLES[selectedGemIdx].name.toLowerCase()}.jpg</span>
+                  </div>
+
+                  {/* Right: Predictions (7 columns) */}
+                  <div className="md:col-span-7 space-y-3.5">
+                    {/* Target Prediction */}
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-mono mb-1">
+                        <span className="text-zinc-200 font-semibold">{GEMSTONE_SAMPLES[selectedGemIdx].name}</span>
+                        <span className="text-emerald-400 font-medium">{(GEMSTONE_SAMPLES[selectedGemIdx].confidence * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/80">
+                        <div 
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                          style={{ width: `${GEMSTONE_SAMPLES[selectedGemIdx].confidence * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Alternatives */}
+                    <div className="space-y-1.5 border-t border-zinc-900/60 pt-3">
+                      <span className="block text-[9px] font-mono text-zinc-500 uppercase tracking-widest mb-1">Top Alternatives</span>
+                      {GEMSTONE_SAMPLES[selectedGemIdx].alternatives.map((alt) => (
+                        <div key={alt.name} className="flex justify-between items-center text-[10px] font-mono">
+                          <span className="text-zinc-400">{alt.name}</span>
+                          <span className="text-zinc-500">{(alt.conf * 100).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Brief narrative info */}
+                <div className="bg-zinc-900/20 border border-zinc-900 rounded-lg p-3 text-xs text-zinc-400 font-sans leading-relaxed">
+                  <span className="font-mono text-[9px] text-zinc-500 uppercase block mb-1">Classifier Insight</span>
+                  {GEMSTONE_SAMPLES[selectedGemIdx].info}
+                </div>
+              </div>
+            )}
+
+            {/* WIDGET 4: UNIVERSITY SECURITY AUDIT & PM */}
             {activeTab === 'security' && (
               <div className="flex flex-col h-full justify-between space-y-4">
                 <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
