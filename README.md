@@ -48,7 +48,12 @@ This repository contains the source code for my interactive developer portfolio.
 - **Repository**: [github.com/dimsedra/ExifSense](https://github.com/dimsedra/ExifSense)
 - **Live Demo**: [exif-sense.vercel.app](https://exif-sense.vercel.app/)
 
-### 3. **Security QA & Audit Lead**
+### 3. **Gemstone: ResNet50 Classifier**
+*I developed a local computer vision classification system capable of identifying 87 distinct gemstone classes. Using transfer learning with a pre-trained ResNet50 backbone and a custom classification head.*
+- **Core Stack**: PyTorch, ResNet50, FastAPI, Roboflow, Pillow.
+- **Repository**: [github.com/dimsedra/Gemstone](https://github.com/dimsedra/Gemstone)
+
+### 4. **Security QA & Audit Lead**
 *Led a 30-member cross-functional team in establishing a secure web application, incorporating threat modeling and parallel testing.*
 - **Core Stack**: OWASP ZAP, Parallel Testing, DOM Threat Auditing, Secure SDLC.
 

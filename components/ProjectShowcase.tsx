@@ -251,7 +251,7 @@ export default function ProjectShowcase() {
               </div>
 
               {/* Project Links */}
-              {(activeTab === 'dialogue' || activeTab === 'exifsense') && (
+              {(activeTab === 'dialogue' || activeTab === 'exifsense' || activeTab === 'gemstone') && (
                 <div className="pt-4 flex items-center gap-4 border-t border-zinc-900/60 mt-2">
                   {activeTab === 'dialogue' && (
                     <a 
@@ -288,6 +288,18 @@ export default function ProjectShowcase() {
                         <ArrowUpRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
                       </a>
                     </>
+                  )}
+                  {activeTab === 'gemstone' && (
+                    <a 
+                      href="https://github.com/dimsedra/Gemstone" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-1.5 text-xs text-zinc-400 hover:text-zinc-100 transition-colors font-mono group"
+                    >
+                      <Github className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+                      <span>Repository</span>
+                      <ArrowUpRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                    </a>
                   )}
                 </div>
               )}
