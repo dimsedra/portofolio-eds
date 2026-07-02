@@ -1,8 +1,6 @@
 # Dimas Edra — Personal Agentic Portfolio
 
 <div align="center">
-  <img width="100%" alt="Dimas Edra Portfolio Banner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-  
   <p align="center">
     <strong>Active Agentic Automation & Local-First Developer</strong><br />
     Informatics Engineering Student at UIN Syarif Hidayatullah Jakarta (GPA 3.71)
