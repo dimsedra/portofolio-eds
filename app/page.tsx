@@ -126,7 +126,7 @@ export default function Home() {
               <Mail className="w-4 h-4" />
             </a>
             <a 
-              href="https://github.com" 
+              href="https://github.com/dimsedra" 
               target="_blank" 
               rel="noreferrer"
               className="text-zinc-400 hover:text-zinc-100 transition-colors"
