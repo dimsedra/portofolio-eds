@@ -135,19 +135,19 @@ export default function AnimatedShader() {
         float caustic = pow(max(0.0, c), 8.0);
         
         // Soft depth bloom for a liquid refraction glow
-        float bloom = pow(max(0.0, c), 2.0) * 0.08;
+        float bloom = pow(max(0.0, c), 2.0) * 0.12;
 
-        // Faint deep blue sea undertone (blends beautifully with page bg-zinc-950)
-        vec3 deepBlue = vec3(0.01, 0.03, 0.06); 
+        // Base zinc-950 background color (#09090b)
+        vec3 baseBg = vec3(0.035, 0.035, 0.043); 
         
-        // Soft white ripples (with a tiny touch of cool cyan/blue for realism)
-        vec3 rippleColor = vec3(0.9, 0.96, 1.0);
+        // Soft white ripples
+        vec3 rippleColor = vec3(1.0, 1.0, 1.0);
         
-        // Combine components
-        vec3 finalRGB = deepBlue + rippleColor * caustic * 0.35 + rippleColor * bloom * 0.15;
-        float alpha = clamp(caustic * 0.25 + bloom * 0.15, 0.0, 0.5);
+        // Combine components using mix for maximum contrast and visibility
+        float intensity = clamp(caustic * 0.65 + bloom * 0.25, 0.0, 1.0);
+        vec3 finalRGB = mix(baseBg, rippleColor, intensity);
 
-        gl_FragColor = vec4(finalRGB, alpha);
+        gl_FragColor = vec4(finalRGB, 1.0); // Output fully opaque to prevent alpha blending issues
       }
     `;
 
@@ -250,17 +250,21 @@ export default function AnimatedShader() {
         if (!fallbackCanvas || !ctx2d) return;
         ctx2d.clearRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
 
-        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.035)';
-        ctx2d.lineWidth = 1;
+        // Draw opaque dark background (#09090b)
+        ctx2d.fillStyle = '#09090b';
+        ctx2d.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+
+        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx2d.lineWidth = 1.5;
         time2d += 0.006;
 
-        const gap = 50;
-        for (let y = 0; y < fallbackCanvas.height + gap; y += gap) {
+        const gap = 60;
+        for (let y = -gap; y < fallbackCanvas.height + gap; y += gap) {
           ctx2d.beginPath();
-          for (let x = 0; x < fallbackCanvas.width + 10; x += 15) {
+          for (let x = 0; x < fallbackCanvas.width + 15; x += 15) {
             const offset = 
-              Math.sin(x * 0.008 + time2d + y * 0.02) * 12 + 
-              Math.cos(x * 0.015 - time2d * 1.3 + y * 0.01) * 6;
+              Math.sin(x * 0.006 + time2d + y * 0.015) * 15 + 
+              Math.cos(x * 0.012 - time2d * 1.2 + y * 0.01) * 8;
             
             if (x === 0) {
               ctx2d.moveTo(x, y + offset);
@@ -282,8 +286,7 @@ export default function AnimatedShader() {
     <canvas
       id="background-shader"
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ mixBlendMode: 'screen' }}
+      className="fixed inset-0 pointer-events-none z-[-1]"
     />
   );
 }

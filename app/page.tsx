@@ -82,8 +82,7 @@ export default function Home() {
       {/* Background Animated Shader */}
       <AnimatedShader />
 
-      {/* Grid Overlay Line Effects */}
-      <div className="fixed inset-0 dot-grid pointer-events-none z-0 opacity-45" />
+
 
       {/* Top Sticky Header */}
       <header className="sticky top-0 z-50 border-b border-zinc-900 bg-zinc-950/60 backdrop-blur-md">
