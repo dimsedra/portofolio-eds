@@ -77,77 +77,47 @@ export default function AnimatedShader() {
         // Normalize coordinates to [0, 1]
         vec2 uv = gl_FragCoord.xy / u_resolution.xy;
         
-        // Scale and correct aspect ratio for drone view
-        vec2 p = uv * 4.0;
+        // Scale and center coordinates for drone view
+        vec2 p = uv * 6.0 - vec2(3.0);
         p.x *= u_resolution.x / u_resolution.y;
         
         // Mouse ripple interaction
         if (u_mouse.x > 0.0) {
           vec2 mouseUV = u_mouse / u_resolution.xy;
+          mouseUV = mouseUV * 6.0 - vec2(3.0);
           mouseUV.x *= u_resolution.x / u_resolution.y;
-          float d = distance(p, mouseUV * 4.0);
-          if (d < 1.5) {
-            float force = (1.5 - d) / 1.5;
-            // Displace coordinates outwards to simulate waves
-            p += normalize(p - mouseUV * 4.0) * sin(d * 10.0 - u_time * 2.5) * force * 0.08;
+          float d = distance(p, mouseUV);
+          if (d < 2.0) {
+            float force = (2.0 - d) / 2.0;
+            // Displace coordinates outward to simulate waves
+            p += normalize(p - mouseUV) * sin(d * 8.0 - u_time * 4.0) * force * 0.18;
           }
         }
 
-        float time = u_time * 0.15; // Slow, calm ocean ripple speed
-        vec2 i = p;
-        float c = 0.0;
-        float inten = 0.0035; // Thin caustics lines
-        float t = 0.0;
-
-        // Unrolled 5 iterations of caustics calculation for absolute compatibility & safety
+        float time = u_time * 0.6; // Gentle ocean wave speed
         
-        // Iteration 1
-        t = time * (1.0 - (2.5 / 1.0));
-        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
-
-        // Iteration 2
-        t = time * (1.0 - (2.5 / 2.0));
-        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
-
-        // Iteration 3
-        t = time * (1.0 - (2.5 / 3.0));
-        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
-
-        // Iteration 4
-        t = time * (1.0 - (2.5 / 4.0));
-        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
-
-        // Iteration 5
-        t = time * (1.0 - (2.5 / 5.0));
-        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
-
-        c /= 5.0;
+        // Create organic wave interference using multiple layered sine waves
+        float wave = 0.0;
+        wave += sin(p.x * 2.0 + time) * 0.45;
+        wave += sin(p.y * 1.6 - time * 0.8) * 0.45;
+        wave += sin((p.x + p.y) * 1.1 + time * 1.3) * 0.3;
+        wave += cos((p.x - p.y) * 2.2 - time * 0.6) * 0.2;
         
-        // Prevent negative values before power functions (causes NaN / black screen on some GPUs)
-        c = 1.17 - pow(max(0.0, c), 1.4);
-
-        // Make the caustics thin and sharp
-        float caustic = pow(max(0.0, c), 8.0);
-        
-        // Soft depth bloom for a liquid refraction glow
-        float bloom = pow(max(0.0, c), 2.0) * 0.12;
+        // Invert and sharpen the absolute value of the wave to get thin white caustic lines
+        float ripple = sin(wave * 9.0);
+        ripple = abs(ripple);
+        ripple = pow(1.0 - ripple, 5.0); // Higher power makes lines thinner and sharper
 
         // Base zinc-950 background color (#09090b)
         vec3 baseBg = vec3(0.035, 0.035, 0.043); 
         
-        // Soft white ripples
-        vec3 rippleColor = vec3(1.0, 1.0, 1.0);
+        // Pure cool-white ripple color
+        vec3 rippleColor = vec3(0.9, 0.95, 1.0);
         
-        // Combine components using mix for maximum contrast and visibility
-        float intensity = clamp(caustic * 0.65 + bloom * 0.25, 0.0, 1.0);
-        vec3 finalRGB = mix(baseBg, rippleColor, intensity);
+        // Mix base background with white ripples based on the calculated caustic intensity
+        vec3 finalRGB = mix(baseBg, rippleColor, ripple * 0.35);
 
-        gl_FragColor = vec4(finalRGB, 1.0); // Output fully opaque to prevent alpha blending issues
+        gl_FragColor = vec4(finalRGB, 1.0);
       }
     `;
 
@@ -254,17 +224,19 @@ export default function AnimatedShader() {
         ctx2d.fillStyle = '#09090b';
         ctx2d.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
 
-        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx2d.lineWidth = 1.5;
-        time2d += 0.006;
+        time2d += 0.015;
 
-        const gap = 60;
+        const gap = 50;
         for (let y = -gap; y < fallbackCanvas.height + gap; y += gap) {
           ctx2d.beginPath();
-          for (let x = 0; x < fallbackCanvas.width + 15; x += 15) {
-            const offset = 
-              Math.sin(x * 0.006 + time2d + y * 0.015) * 15 + 
-              Math.cos(x * 0.012 - time2d * 1.2 + y * 0.01) * 8;
+          for (let x = 0; x < fallbackCanvas.width + 20; x += 20) {
+            const waveValue = 
+              Math.sin(x * 0.005 + time2d + y * 0.01) * 0.5 + 
+              Math.sin(y * 0.008 - time2d * 0.8) * 0.5;
+            
+            const offset = Math.sin(waveValue * 8.0) * 15;
             
             if (x === 0) {
               ctx2d.moveTo(x, y + offset);
