@@ -137,9 +137,9 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-24 space-y-24">
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-40 md:space-y-56">
         {/* HERO SECTION */}
-        <section className="space-y-8 max-w-3xl">
+        <section className="min-h-[75vh] flex flex-col justify-center space-y-8 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -260,7 +260,7 @@ export default function Home() {
               <h2 className="text-2xl font-display font-medium text-zinc-100">Featured Implementations</h2>
             </div>
             <p className="text-zinc-500 text-xs font-mono max-w-sm">
-              An overview of my core engineering, localized intelligence projects, and security research. Select tabs to explore interactive simulators.
+              A curated collection of my core engineering, localized intelligence projects, and security research. Scroll to explore the interactive mockups.
             </p>
           </div>
 
