@@ -9,20 +9,17 @@ export default function AnimatedShader() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-
     // Track mouse position
     const mouse = { x: -1000, y: -1000, active: false };
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl instanceof WebGLRenderingContext) {
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -41,120 +38,214 @@ export default function AnimatedShader() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
 
-    // Particle class
-    class Particle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-      baseRadius: number;
+    // Initial resize
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-      constructor() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.25;
-        this.vy = (Math.random() - 0.5) * 0.25;
-        this.radius = Math.random() * 1.5 + 0.5;
-        this.baseRadius = this.radius;
-      }
+    // WebGL initialization
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    let animationFrameId: number;
 
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        // Bounce on boundaries
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
-
-        // Mouse attraction/repulsion effect
-        if (mouse.active) {
-          const dx = mouse.x - this.x;
-          const dy = mouse.y - this.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 180) {
-            const force = (180 - dist) / 180;
-            // Push away gently
-            this.x -= (dx / dist) * force * 1.2;
-            this.y -= (dy / dist) * force * 1.2;
-            this.radius = this.baseRadius * (1 + force * 1.5);
-          } else {
-            this.radius = this.baseRadius;
-          }
-        } else {
-          this.radius = this.baseRadius;
-        }
-      }
-
-      draw(c: CanvasRenderingContext2D) {
-        c.beginPath();
-        c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        c.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        c.fill();
-      }
+    if (!gl || !(gl instanceof WebGLRenderingContext)) {
+      // Fallback: Canvas 2D Calm Water Simulation
+      initializeCanvas2DFallback(canvas);
+      return;
     }
 
-    const particlesCount = Math.min(80, Math.floor((width * height) / 18000));
-    const particles: Particle[] = Array.from({ length: particlesCount }, () => new Particle());
-
-    // Main render loop
-    const animate = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      // Draw horizontal reference lines that represent structural data threads
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.015)';
-      ctx.lineWidth = 1;
-      const step = 80;
-      for (let y = 0; y < height; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
+    // WebGL Shader Source Code
+    const vsSource = `
+      attribute vec2 position;
+      void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
       }
+    `;
 
-      // Draw vertical lines
-      for (let x = 0; x < width; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
+    const fsSource = `
+      precision highp float;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform vec2 u_mouse;
 
-      // Render & connect particles
-      particles.forEach((p, i) => {
-        p.update();
-        p.draw(ctx);
+      #define MAX_ITER 5
 
-        // Check distance to other particles and connect with faint lines
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p.x - p2.x;
-          const dy = p.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 120) {
-            const alpha = (120 - dist) / 120 * 0.08;
-            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
+      void main() {
+        // Normalize coordinates to [0, 1]
+        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+        
+        // Scale and correct aspect ratio for drone view
+        vec2 p = uv * 3.5;
+        p.x *= u_resolution.x / u_resolution.y;
+        
+        // Mouse ripple interaction
+        if (u_mouse.x > 0.0) {
+          vec2 mouseUV = u_mouse / u_resolution.xy;
+          mouseUV.x *= u_resolution.x / u_resolution.y;
+          float d = distance(p, mouseUV * 3.5);
+          if (d < 1.5) {
+            float force = (1.5 - d) / 1.5;
+            // Displace coordinates outwards to simulate waves
+            p += normalize(p - mouseUV * 3.5) * sin(d * 10.0 - u_time * 2.5) * force * 0.08;
           }
         }
-      });
 
-      animationFrameId = requestAnimationFrame(animate);
+        float time = u_time * 0.18; // Very slow, calm ocean ripple speed
+        vec2 i = p;
+        float c = 1.0;
+        float inten = 0.0035; // Thin caustics lines
+
+        // Layer waves mathematically to form water caustics networks
+        for (int n = 0; n < MAX_ITER; n++) {
+          float t = time * (1.0 - (2.5 / float(n + 1)));
+          i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+          c += 1.0 / length(vec2(p.x / (sin(i.x + t) / inten), p.y / (cos(i.y + t) / inten)));
+        }
+
+        c /= float(MAX_ITER);
+        c = 1.17 - pow(c, 1.4);
+
+        // Make the caustics thin and sharp
+        float caustic = pow(max(0.0, c), 8.0);
+        
+        // Soft depth bloom for a liquid refraction glow
+        float bloom = pow(max(0.0, c), 2.0) * 0.06;
+
+        // Faint deep blue sea undertone (blends beautifully with page bg-zinc-950)
+        vec3 deepBlue = vec3(0.01, 0.03, 0.06); 
+        
+        // Soft white ripples (with a tiny touch of cool cyan/blue for realism)
+        vec3 rippleColor = vec3(0.9, 0.96, 1.0);
+        
+        // Combine components
+        vec3 finalRGB = deepBlue + rippleColor * caustic * 0.35 + rippleColor * bloom * 0.15;
+        float alpha = clamp(caustic * 0.2 + bloom * 0.12, 0.0, 0.5);
+
+        gl_FragColor = vec4(finalRGB, alpha);
+      }
+    `;
+
+    const createShader = (glContext: WebGLRenderingContext, type: number, source: string) => {
+      const shader = glContext.createShader(type);
+      if (!shader) return null;
+      glContext.shaderSource(shader, source);
+      glContext.compileShader(shader);
+      if (!glContext.getShaderParameter(shader, glContext.COMPILE_STATUS)) {
+        console.error('Shader compile error:', glContext.getShaderInfoLog(shader));
+        glContext.deleteShader(shader);
+        return null;
+      }
+      return shader;
     };
 
-    animate();
+    const program = gl.createProgram();
+    const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+    if (!program || !vs || !fs) return;
+
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.error('Shader link error:', gl.getProgramInfoLog(program));
+      return;
+    }
+
+    // Geometry buffer for a full-screen quad (2 triangles)
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    const positions = new Float32Array([
+      -1, -1,
+       1, -1,
+      -1,  1,
+      -1,  1,
+       1, -1,
+       1,  1,
+    ]);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+    const positionLocation = gl.getAttribLocation(program, 'position');
+    const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+    const timeLocation = gl.getUniformLocation(program, 'u_time');
+    const mouseLocation = gl.getUniformLocation(program, 'u_mouse');
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    const startTime = Date.now();
+
+    const render = () => {
+      if (!canvas || !gl) return;
+
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(program);
+
+      gl.enableVertexAttribArray(positionLocation);
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+      gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+      gl.uniform1f(timeLocation, (Date.now() - startTime) / 1000);
+      
+      if (mouse.active) {
+        // Convert to WebGL bottom-left origin coordinates
+        gl.uniform2f(mouseLocation, mouse.x, canvas.height - mouse.y);
+      } else {
+        gl.uniform2f(mouseLocation, -1000, -1000);
+      }
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
 
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       cancelAnimationFrame(animationFrameId);
+      gl.deleteProgram(program);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      gl.deleteBuffer(positionBuffer);
     };
+
+    // Canvas 2D Fallback: organic waving lines
+    function initializeCanvas2DFallback(fallbackCanvas: HTMLCanvasElement) {
+      const ctx2d = fallbackCanvas.getContext('2d');
+      if (!ctx2d) return;
+
+      let time2d = 0;
+
+      const render2d = () => {
+        if (!fallbackCanvas || !ctx2d) return;
+        ctx2d.clearRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+
+        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+        ctx2d.lineWidth = 1;
+        time2d += 0.006;
+
+        const gap = 50;
+        for (let y = 0; y < fallbackCanvas.height + gap; y += gap) {
+          ctx2d.beginPath();
+          for (let x = 0; x < fallbackCanvas.width + 10; x += 15) {
+            const offset = 
+              Math.sin(x * 0.008 + time2d + y * 0.02) * 12 + 
+              Math.cos(x * 0.015 - time2d * 1.3 + y * 0.01) * 6;
+            
+            if (x === 0) {
+              ctx2d.moveTo(x, y + offset);
+            } else {
+              ctx2d.lineTo(x, y + offset);
+            }
+          }
+          ctx2d.stroke();
+        }
+
+        animationFrameId = requestAnimationFrame(render2d);
+      };
+
+      render2d();
+    }
   }, []);
 
   return (
