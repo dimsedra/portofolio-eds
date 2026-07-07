@@ -115,7 +115,8 @@ export default function AnimatedShader() {
         vec3 rippleColor = vec3(0.9, 0.95, 1.0);
         
         // Mix base background with white ripples based on the calculated caustic intensity
-        vec3 finalRGB = mix(baseBg, rippleColor, ripple * 0.35);
+        // Ripple intensity is scaled down to 0.08 (8%) to keep background subtle and ensure text readability
+        vec3 finalRGB = mix(baseBg, rippleColor, ripple * 0.08);
 
         gl_FragColor = vec4(finalRGB, 1.0);
       }
@@ -224,7 +225,7 @@ export default function AnimatedShader() {
         ctx2d.fillStyle = '#09090b';
         ctx2d.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
 
-        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx2d.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctx2d.lineWidth = 1.5;
         time2d += 0.015;
 
