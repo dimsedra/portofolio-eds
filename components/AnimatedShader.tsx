@@ -286,7 +286,7 @@ export default function AnimatedShader() {
     <canvas
       id="background-shader"
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[-1]"
+      className="fixed inset-0 pointer-events-none z-0"
     />
   );
 }
