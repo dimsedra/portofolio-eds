@@ -46,10 +46,17 @@ export default function AnimatedShader() {
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     let animationFrameId: number;
 
+    const cleanupListeners = () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+      cancelAnimationFrame(animationFrameId);
+    };
+
     if (!gl || !(gl instanceof WebGLRenderingContext)) {
       // Fallback: Canvas 2D Calm Water Simulation
       initializeCanvas2DFallback(canvas);
-      return;
+      return cleanupListeners;
     }
 
     // WebGL Shader Source Code
@@ -66,48 +73,69 @@ export default function AnimatedShader() {
       uniform float u_time;
       uniform vec2 u_mouse;
 
-      #define MAX_ITER 5
-
       void main() {
         // Normalize coordinates to [0, 1]
         vec2 uv = gl_FragCoord.xy / u_resolution.xy;
         
         // Scale and correct aspect ratio for drone view
-        vec2 p = uv * 3.5;
+        vec2 p = uv * 4.0;
         p.x *= u_resolution.x / u_resolution.y;
         
         // Mouse ripple interaction
         if (u_mouse.x > 0.0) {
           vec2 mouseUV = u_mouse / u_resolution.xy;
           mouseUV.x *= u_resolution.x / u_resolution.y;
-          float d = distance(p, mouseUV * 3.5);
+          float d = distance(p, mouseUV * 4.0);
           if (d < 1.5) {
             float force = (1.5 - d) / 1.5;
             // Displace coordinates outwards to simulate waves
-            p += normalize(p - mouseUV * 3.5) * sin(d * 10.0 - u_time * 2.5) * force * 0.08;
+            p += normalize(p - mouseUV * 4.0) * sin(d * 10.0 - u_time * 2.5) * force * 0.08;
           }
         }
 
-        float time = u_time * 0.18; // Very slow, calm ocean ripple speed
+        float time = u_time * 0.15; // Slow, calm ocean ripple speed
         vec2 i = p;
-        float c = 1.0;
+        float c = 0.0;
         float inten = 0.0035; // Thin caustics lines
+        float t = 0.0;
 
-        // Layer waves mathematically to form water caustics networks
-        for (int n = 0; n < MAX_ITER; n++) {
-          float t = time * (1.0 - (2.5 / float(n + 1)));
-          i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-          c += 1.0 / length(vec2(p.x / (sin(i.x + t) / inten), p.y / (cos(i.y + t) / inten)));
-        }
+        // Unrolled 5 iterations of caustics calculation for absolute compatibility & safety
+        
+        // Iteration 1
+        t = time * (1.0 - (2.5 / 1.0));
+        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
 
-        c /= float(MAX_ITER);
-        c = 1.17 - pow(c, 1.4);
+        // Iteration 2
+        t = time * (1.0 - (2.5 / 2.0));
+        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
+
+        // Iteration 3
+        t = time * (1.0 - (2.5 / 3.0));
+        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
+
+        // Iteration 4
+        t = time * (1.0 - (2.5 / 4.0));
+        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
+
+        // Iteration 5
+        t = time * (1.0 - (2.5 / 5.0));
+        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+        c += 1.0 / (length(vec2(p.x / (sin(i.x + t) / inten + 0.0001), p.y / (cos(i.y + t) / inten + 0.0001))) + 0.005);
+
+        c /= 5.0;
+        
+        // Prevent negative values before power functions (causes NaN / black screen on some GPUs)
+        c = 1.17 - pow(max(0.0, c), 1.4);
 
         // Make the caustics thin and sharp
         float caustic = pow(max(0.0, c), 8.0);
         
         // Soft depth bloom for a liquid refraction glow
-        float bloom = pow(max(0.0, c), 2.0) * 0.06;
+        float bloom = pow(max(0.0, c), 2.0) * 0.08;
 
         // Faint deep blue sea undertone (blends beautifully with page bg-zinc-950)
         vec3 deepBlue = vec3(0.01, 0.03, 0.06); 
@@ -117,7 +145,7 @@ export default function AnimatedShader() {
         
         // Combine components
         vec3 finalRGB = deepBlue + rippleColor * caustic * 0.35 + rippleColor * bloom * 0.15;
-        float alpha = clamp(caustic * 0.2 + bloom * 0.12, 0.0, 0.5);
+        float alpha = clamp(caustic * 0.25 + bloom * 0.15, 0.0, 0.5);
 
         gl_FragColor = vec4(finalRGB, alpha);
       }
@@ -140,15 +168,20 @@ export default function AnimatedShader() {
     const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
     const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-    if (!program || !vs || !fs) return;
+    if (!program || !vs || !fs) {
+      console.warn('WebGL Shader compilation failed. Falling back to Canvas 2D.');
+      initializeCanvas2DFallback(canvas);
+      return cleanupListeners;
+    }
 
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error('Shader link error:', gl.getProgramInfoLog(program));
-      return;
+      console.warn('WebGL Program linking failed. Falling back to Canvas 2D.');
+      initializeCanvas2DFallback(canvas);
+      return cleanupListeners;
     }
 
     // Geometry buffer for a full-screen quad (2 triangles)
@@ -199,10 +232,7 @@ export default function AnimatedShader() {
     render();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-      cancelAnimationFrame(animationFrameId);
+      cleanupListeners();
       gl.deleteProgram(program);
       gl.deleteShader(vs);
       gl.deleteShader(fs);
