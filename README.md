@@ -18,7 +18,7 @@
 ## Tech Stack Experience
 - **Programming Langugage**: TypeScript, Python, JavaScript, HTML, CSS.
 - **Framework**: Next.js, React, FastAPI, PyTorch
-- **Agent Orchestration**: Mastra SDK, Vercel AI SDK
+- **AI Agent Orchestration**: Mastra SDK, Vercel AI SDK
 - **BaaS (Backend-as-a-Service)**: PocketBase (SQlite), Convex
 
 ---
