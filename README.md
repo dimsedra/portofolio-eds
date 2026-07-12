@@ -7,7 +7,7 @@
   </p>
 
   <p align="center">
-    <a href="https://portofolio-eds.vercel.app/ target="_blank">Portofolio Siteo</a> • 
+    <a href="https://portofolio-eds.vercel.app/ target="_blank">Portofolio Site</a> • 
     <a href="https://www.linkedin.com/in/dimasedra/" target="_blank">LinkedIn</a> • 
     <a href="mailto:dimasedraarrafi@gmail.com">Contact Email</a>
   </p>
