@@ -1,4 +1,4 @@
-# Dimas Edra — Personal Agentic Portfolio
+# Dimas Edra Ar Rafi
 
 <div align="center">
   <p align="center">
