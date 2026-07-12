@@ -15,18 +15,8 @@
 
 ---
 
-## 🌌 Project Overview
-This repository contains the source code for my interactive developer portfolio. The website features custom shaders, a simulated local AI terminal companion, interactive project workflows, and a full Spec Sheet of my technical competencies.
-
-### Key Highlights
-- **Interactive Agent Simulator**: Showcases data pipelines integrating Next.js, Mastra, Vercel AI SDK, and Pocketbase.
-- **Natural Language EXIF Engine**: A live demonstration of ExifSense narrative translation rules.
-- **Dynamic Web Animations**: Powered by Tailwind CSS, smooth transitions, and custom canvas-based background shaders.
-- **Fully Responsive Layout**: Built with a sleek, premium dark-mode aesthetic.
-
----
-
-## 🛠️ Tech Stack & Specs
+## 🛠️ Tech Stack
+- **Programming Langugage**: TypeScript, Python, JavaScript.
 - **Frontend Framework**: Next.js 15 (React 19, TypeScript)
 - **Styling**: Tailwind CSS 4, Custom Vanilla CSS effects (Glassmorphism, Glow effects)
 - **Agent Orchestration**: Mastra SDK, Vercel AI SDK
